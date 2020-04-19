@@ -8,6 +8,8 @@
 //Dimension por defecto de las matrices
 int N=100;
 int canthilos=4;
+double *A,*B,*C,*D,*E;
+int i,j,k;
 
 //Retorna el valor de la matriz en la posicion fila y columna segun el orden que este ordenada
 double getValor(double *matriz,int fila,int columna,int orden){
@@ -37,8 +39,11 @@ double dwalltime(){
         return sec;
 }
 
+
+//hilo que multiplica parte de la matriz
 void *multiplica(void *id) {
-unsigned long threadId = (unsigned long) id;
+  float i,j,k;
+  unsigned long threadId = (unsigned long) id;
   for(i = (threadId*(N/canthilos)); i < ((threadId+1)*(N/canthilos)); i++){
    for(j = (threadId*(N/canthilos)); j < ((threadId+1)*(N/canthilos)); j++){
     setValor(C,i,j,ORDENXFILAS,0);
@@ -49,10 +54,8 @@ unsigned long threadId = (unsigned long) id;
   }
 }
 
-
 int main(int argc,char*argv[]){
- double *A,*B,*C,*D,*E;
- int i,j,k;
+ 
  int check=1;
  double timetick;
 
@@ -80,12 +83,15 @@ int main(int argc,char*argv[]){
   }   
 
 timetick = dwalltime();
+pthread_t threads[canthilos];
+pthread_attr_t attr;
+int i, ids[canthilos];
 
-for (i = 0; i < canthilos; i++){
-     flag = pthread_create(&threads[i], NULL, multiplica, (void *) (unsigned long) i);
+for (i = 0; i < canthilos; i++)
+  pthread_create(&threads[i], NULL, multiplica, (void *) (unsigned long) i);
  
-   for (i = 0; i < canthilos; i++)
-     pthread_join(threads[i], NULL);
+for (i = 0; i < canthilos; i++)
+  pthread_join(threads[i], NULL);
 
 
  printf("Multiplicacion de matrices de %dx%d. Tiempo en segundos %f\n",N,N, dwalltime() - timetick);
@@ -93,7 +99,7 @@ for (i = 0; i < canthilos; i++){
  //Verifica el resultado
   for(i=0;i<N;i++){
    for(j=0;j<N;j++){
-	check=check&&(getValor(E,i,j,ORDENXFILAS)==N*N);
+	check=check&&(getValor(E,i,j,ORDENXFILAS)==N);
    }
   }   
 
@@ -107,6 +113,7 @@ for (i = 0; i < canthilos; i++){
  free(B);
  free(C);
  return(0);
+
 }
 
 
