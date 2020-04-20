@@ -3,26 +3,27 @@
 #include<stdlib.h>
 #include <sys/time.h>
 
-int canthilos=2;
-int numabuscar=2;
+int canthilos=4;
 int N=20;
 int arreglo[20];
-int apariciones=0;
+float total=0;
 pthread_mutex_t task_queue_lock;
 
 
 void *multiplica(void *id) {
+    
   int i;
-  int cant=0;
+  float promedioLocal,cant = 0;
   int threadId = (int) id;
+  //recorro y sumo mi parte del arreglo
   for(i = (threadId*(N/canthilos)); i < ((threadId+1)*(N/canthilos)); i++){
-   	if(arreglo[i]==numabuscar){
-   		cant++;
-   	}
-   	printf("%d\n", arreglo[i]);
+   		cant+= arreglo[i];
   }
+  promedioLocal = cant / (N/canthilos);
+  printf("Mi promedio local %f\n", promedioLocal);
+  //almaceno el promedio de lo que junte en el centralizado
   pthread_mutex_lock(&task_queue_lock);
-  	apariciones += cant;
+  	total += promedioLocal;
   pthread_mutex_unlock(&task_queue_lock);
 }
 
@@ -39,15 +40,15 @@ double dwalltime(){
 int main(int argc,char*argv[]){
  
 
- srand ( time(NULL) );
- int i;
 
+ int i;
+ srand ( time(NULL) );
+ //srand genera la semilla random
  for (i = 0; i < N; i++){
  	arreglo[i] = rand() % 10;
  }
 
  double timetick;
-
 
 timetick = dwalltime();
 pthread_t threads[canthilos];
@@ -62,9 +63,10 @@ for (i = 0; i < canthilos; i++)
 for (i = 0; i < canthilos; i++)
   pthread_join(threads[i], NULL);
 
-
- printf("Buscar apariciones en un arreglo de dimension %d. Tiempo en segundos %f\n",N, dwalltime() - timetick);
- printf("Apariciones: %d\n", apariciones);
+//en total esta la suma de los promedios calculados por los hilos, lo dividimos acorde a la cantidad de hilos que ejecutaron  
+total = total / canthilos ;
+printf("Tiempo en segundos %f\n", dwalltime() - timetick);
+printf("Promedio: %f\n", total );
 
  return(0);
 
