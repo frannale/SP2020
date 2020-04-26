@@ -23,7 +23,6 @@ void *multiplica(void *id) {
   }
   printf("Mi minimoo local del hilo %d %d\n",threadId, minLocal);
   printf("Mi maximo local del hilo %d %d\n",threadId, maxLocal);
-  //ACA SE PODRIA MEJORAR LA EFICIENCIA? PREGUNTANDO POR EL MIN SI ESTA OCUPADO
   
   //verifico maximo local contra global
   pthread_mutex_lock(&task_queue_max);
