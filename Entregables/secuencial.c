@@ -16,7 +16,6 @@ double dwalltime(){
 }
 
 int main(int argc,char*argv[]){
-    printf("Mi minimoo tota");
     int i,j;
     float totalA=0;
     float totalB=0;
@@ -37,25 +36,34 @@ int main(int argc,char*argv[]){
     //srand genera la semilla random y cargo las matrices
       for(i = 0 ; i < N ; i++){
         for (j = 0; j < N; j++){
-            A[i*N+j] = rand() % 100;
-            B[i*N+j] = rand() % 100;
-            C[i*N+j] = rand() % 100;
+            A[i*N+j] = rand() % 1000;
+            B[i*N+j] = rand() % 1000;
+            C[i*N+j] = rand() % 1000;
         }
       }
 
      
     double timetick;
     timetick = dwalltime();
-    // que comienze el juego
-
+    // RECORRO A Y CALCULO AVG,MAX,MIN
     for(i = 0 ; i < N ; i++){
         for(j = 0; j < N; j++){
             totalA+= A[i*N+j];
             if(A[i*N+j] > maxA) maxA = A[i*N+j] ;
             if(A[i*N+j] < minA) minA = A[i*N+j] ;
+        }
+    }
+  // RECORRO B Y CALCULO AVG,MAX,MIN
+    for(i = 0 ; i < N ; i++){
+        for(j = 0; j < N; j++){
             totalB+= B[i*N+j];
             if(B[i*N+j] > maxB) maxB = B[i*N+j] ;
             if(B[i*N+j] < minB) minB = B[i*N+j] ;
+        }
+    }
+    // RECORRO C Y CALCULO AVG,MAX,MIN
+    for(i = 0 ; i < N ; i++){
+        for(j = 0; j < N; j++){
             totalC+= C[i*N+j];
             if(C[i*N+j] > maxC) maxC = C[i*N+j] ;
             if(C[i*N+j] < minC) minC = C[i*N+j] ;
