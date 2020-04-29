@@ -2,8 +2,8 @@
 #include<stdlib.h>
 #include <sys/time.h>
 
-int N=16;
-double *A,*B,*C,*D;
+int N=4;
+double *A,*B,*C,*D,*E;
 
 //Para calcular tiempo
 double dwalltime(){
@@ -16,21 +16,22 @@ double dwalltime(){
 }
 
 int main(int argc,char*argv[]){
-    int i,j;
+    int i,j,k;
     float totalA=0;
     float totalB=0;
     float totalC=0;
     int maxA = 0;
     int maxB = 0;
     int maxC = 0;
-    int minA = 100;
-    int minB = 100;
-    int minC = 100;
+    int minA = 1000;
+    int minB = 1000;
+    int minC = 1000;
     //Aloca memoria para las matrices
     A=(double*)malloc(sizeof(double)*N*N);
     B=(double*)malloc(sizeof(double)*N*N);
     C=(double*)malloc(sizeof(double)*N*N);
     D=(double*)malloc(sizeof(double)*N*N);
+    E=(double*)malloc(sizeof(double)*N*N);
     
     srand ( time(NULL) );
     //srand genera la semilla random y cargo las matrices
@@ -69,7 +70,6 @@ int main(int argc,char*argv[]){
             if(C[i*N+j] < minC) minC = C[i*N+j] ;
         }
     }
-    printf("Tiempo en segundos %f\n", dwalltime() - timetick);
     printf("Promedio A: %f\n", totalA/(N*N) );
     printf("Promedio B: %f\n", totalB/(N*N) );
     printf("Promedio C: %f\n", totalC/(N*N) );
@@ -82,6 +82,39 @@ int main(int argc,char*argv[]){
 
 
     // EN ESTA ALTURA YA TENEMOS EL PROMEDIO Y LOS LIMITES, SOLO QUEDA MULTIPLICARLOS POR LAS MATRICES
+
+    //Realiza la multiplicacion
+
+    timetick = dwalltime();
+    // E = A.B
+    for(i=0;i<N;i++){
+        for(j=0;j<N;j++){
+            for(k=0;k<N;k++){
+                E[i*N+j]= A[i*N+k] * B[k+j*N];
+            }
+        }
+    }   
+    // D = E.C
+    for(i=0;i<N;i++){
+        for(j=0;j<N;j++){
+            for(i=0;i<N;i++){
+                D[i*N+j]= E[i*N+k] * C[k+j*N];
+                printf("GU C %f\n",C[i*N+k] );
+            }
+        }
+    }
+    // MULTIPLICO POR EL ESCALAR
+    long int escalar = (maxA * maxB * maxC - minA * minB * minC) / totalA/(N*N) * totalB/(N*N) *totalC/(N*N);
+    for(i=0;i<N;i++){
+        for(j=0;j<N;j++){
+            D[i*N+j]=D[i*N+j] * escalar;
+            printf("item %f\n", D[i*N+j] );
+            printf("escala %f\n", D[i*N+j] * escalar );
+
+        }
+    }
+
+    printf("Tiempo en segundos %f\n", dwalltime() - timetick);
 
  return(0);
 
