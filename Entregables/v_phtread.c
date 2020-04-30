@@ -4,22 +4,22 @@
 #include <sys/time.h>
 
 //cantidad de hilos
-int canthilos = 8;
-int manager = 8;
+int canthilos = 4;
+int manager = 4;
 // tamanio de la matriz
-int N=2048;
+int N=4096;
 // maximo numero generado en cada posicion, hay limite? 0 y 1?
 // la ultima posicion es la que usara el manager 
 int nRandom = 50;
-int totalA[9];
-int totalB[9];
-int totalC[9];
-int maxA[9];
-int maxB[9];
-int maxC[9];
-int minA[9];
-int minB[9];
-int minC[9];
+int totalA[5];
+int totalB[5];
+int totalC[5];
+int maxA[5];
+int maxB[5];
+int maxC[5];
+int minA[5];
+int minB[5];
+int minC[5];
 double *A,*B,*C,*D,*E;
 float escalar;
 

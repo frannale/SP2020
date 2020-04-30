@@ -2,7 +2,7 @@
 #include<stdlib.h>
 #include <sys/time.h>
 
-int N=2048;
+int N;
 double *A,*B,*C,*D,*E;
 
 //Para calcular tiempo
@@ -16,6 +16,14 @@ double dwalltime(){
 }
 
 int main(int argc,char*argv[]){
+
+    //Controla los argumentos al programa
+    if ((argc != 2) || ((N = atoi(argv[1])) <= 0) )
+    {
+        printf("\nUsar: %s n\n  n: Dimension de la matriz (nxn X nxn)\n", argv[0]);
+        exit(1);
+    }
+
     int i,j,k;
     int totalA=0;
     int totalB=0;
