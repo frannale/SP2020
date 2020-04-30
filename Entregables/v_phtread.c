@@ -4,58 +4,91 @@
 #include <sys/time.h>
 
 //cantidad de hilos
-int canthilos = 4;
-int manager = 4;
+int canthilos = 8;
+int manager = 8;
 // tamanio de la matriz
-int N=4096;
+int N=2048;
 // maximo numero generado en cada posicion, hay limite? 0 y 1?
 // la ultima posicion es la que usara el manager 
 int nRandom = 50;
-int totalA[5];
-int totalB[5];
-int totalC[5];
-int maxA[5];
-int maxB[5];
-int maxC[5];
-int minA[5];
-int minB[5];
-int minC[5];
-double *A,*B,*C,*D;
+int totalA[9];
+int totalB[9];
+int totalC[9];
+int maxA[9];
+int maxB[9];
+int maxC[9];
+int minA[9];
+int minB[9];
+int minC[9];
+double *A,*B,*C,*D,*E;
+float escalar;
 
 // HILO QUE CALCULA EL PROMEDIO Y MAXIMOS,MINIMOS
 void *promedioYLimites(void *id) {
     // habria que multiplicar aca?? o despues de procesar todo
-
+    int i,j,k;
     int threadId = (int) (__intptr_t) id;
     int inicio = threadId * (N/canthilos);
     int fin = inicio + (N/canthilos);
     //RECORRO A
    
-    for(int i = inicio ; i < fin ; i++){
-      for(int j = inicio; j < fin; j++){
-        totalA[threadId] = totalA[threadId] + A[i*N+j];
+    for( i = inicio ; i < fin ; i++){
+      for( j = 0; j < N; j++){
+        totalA[threadId] = totalA[threadId] + A[i*N+j];        
         if(A[i*N+j] > maxA[threadId]) maxA[threadId] = A[i*N+j] ;
-        printf("tot %f\n", A[i*N+j]);
         if(A[i*N+j] < minA[threadId]) minA[threadId] = A[i*N+j] ;
       }
     }
-     printf("tot %d\n", threadId);
     //RECORRO B
-    for(int i = inicio ; i < fin ; i++){
-      for(int j = inicio; j < fin; j++){
+    for( i = inicio ; i < fin ; i++){
+      for( j = 0; j < N; j++){
         totalB[threadId] += B[i*N+j];
         if(B[i*N+j] > maxB[threadId]) maxB[threadId] = B[i*N+j] ;
         if(B[i*N+j] < minB[threadId]) minB[threadId] = B[i*N+j] ;
       }
     }
     //RECORRO C
-    for(int i = inicio ; i < fin ; i++){
-      for(int j = inicio; j < fin; j++){
+    for( i = inicio ; i < fin ; i++){
+      for( j = 0; j < N; j++){
         totalC[threadId] += C[i*N+j];
         if(C[i*N+j] > maxC[threadId]) maxC[threadId] = C[i*N+j] ;
         if(C[i*N+j] < minC[threadId]) minC[threadId] = C[i*N+j] ;
       }
-    }  
+    }
+    // E = A.B
+    for( i=inicio;i<fin;i++){
+        for(j=0;j<N;j++){
+            for(k=0;k<N;k++){
+                E[i*N+j]= A[i*N+k] * B[k+j*N];
+            }
+        }
+    }   
+    // D = E.C
+    for(i=inicio;i<fin;i++){
+        for(j=0;j<N;j++){
+            for(k=0;k<N;k++){
+                D[i*N+j]= E[i*N+k] * C[k+j*N];
+            }
+        }
+    }
+
+
+}
+
+// HILO QUE MULTIPLICA POR EL ESCALAR
+void *multiplicarEscalar(void *id) {
+    // MULTIPLICO POR EL ESCALAR
+    int i,j;
+    int threadId = (int) (__intptr_t) id;
+    int inicio = threadId * (N/canthilos);
+    int fin = inicio + (N/canthilos);
+    for(i=inicio;i<fin;i++){
+        for(j=0;j<N;j++){
+            D[i*N+j]=D[i*N+j] * escalar;
+
+        }
+    }
+
 }
 
 //Para calcular tiempo
@@ -76,6 +109,7 @@ int main(int argc,char*argv[]){
     B=(double*)malloc(sizeof(double)*N*N);
     C=(double*)malloc(sizeof(double)*N*N);
     D=(double*)malloc(sizeof(double)*N*N);
+    E=(double*)malloc(sizeof(double)*N*N);
 
     pthread_t threads[canthilos];
     pthread_attr_t attr;
@@ -117,10 +151,9 @@ int main(int argc,char*argv[]){
     for (i = 0; i < canthilos; i++)
       pthread_join(threads[i], NULL);
 
-    // TODOS LOS HILOS COMPLETARON EL PROCESAMIENTO, AHORA HABRIA QUE MULTIPLICAR POR EL ESCALAR
-
+    // TODOS LOS HILOS COMPLETARON EL PROCESAMIENTO, AHORA HABRIA QUE CALCULAR EL ESCALAR
     // RECORRO LO GENERADO POR LO HILOS Y ME QUEDO CON LO MEJOR, aca se puede ser mas eficiente?? recorrer en muchos for? al igual que en los hilos?
-    for(int k = 0; k < canthilos; k++){
+    for(int i = 0; i < canthilos; i++){
       totalA[manager] += totalA[i];
       totalB[manager] += totalB[i];
       totalC[manager] += totalC[i];
@@ -132,19 +165,30 @@ int main(int argc,char*argv[]){
       if( maxC[manager] < maxC[i] ) maxC[manager] = maxC[i];
 
     } 
-    
-    printf("Tiempo en segundos %f\n", dwalltime() - timetick);
-    printf("Promedio A: %d\n", totalA[manager]/(N*N) );
-    printf("Promedio B: %d\n", totalB[manager]/(N*N) );
-    printf("Promedio C: %d\n", totalC[manager]/(N*N) );
-    printf("Mi minimoo total A %d\n", minA[manager]);
-    printf("Mi maximo total A %d\n", maxA[manager]);
-    printf("Mi minimoo total B %d\n", minB[manager]);
-    printf("Mi maximo total b %d\n", maxB[manager]);
-    printf("Mi minimoo total C %d\n", minC[manager]);
-    printf("Mi maximo total C %d\n", maxC[manager]);
 
-// EN ESTA ALTURA YA TENEMOS EL PROMEDIO Y LOS LIMITES, SOLO QUEDA MULTIPLICARLOS POR LAS MATRICES
+    // printf("Promedio A: %d\n", totalA[manager]/(N*N) );
+    // printf("Promedio B: %d\n", totalB[manager]/(N*N) );
+    // printf("Promedio C: %d\n", totalC[manager]/(N*N) );
+    // printf("Mi minimoo total A %d\n", minA[manager]);
+    // printf("Mi maximo total A %d\n", maxA[manager]);
+    // printf("Mi minimoo total B %d\n", minB[manager]);
+    // printf("Mi maximo total b %d\n", maxB[manager]);
+    // printf("Mi minimoo total C %d\n", minC[manager]);
+    // printf("Mi maximo total C %d\n", maxC[manager]);
+
+    escalar = (maxA[manager] * maxB[manager] * maxC[manager] - minA[manager] * minB[manager] * minC[manager]) / totalA[manager]/(N*N) * totalB[manager]/(N*N) *totalC[manager]/(N*N);
+    
+    // EN ESTA ALTURA YA TENEMOS EL ESCALAR, LOS HILOS SE ENCARGAN DE MULTIPLICAR POR EL MISMO
+    for (i = 0; i < canthilos; i++)
+      pthread_create(&threads[i], NULL, multiplicarEscalar, (void *) (__intptr_t) i);  
+    
+    for (i = 0; i < canthilos; i++)
+      pthread_join(threads[i], NULL);
+
+    //TERMINO
+
+    printf("Tiempo en segundos %f\n", dwalltime() - timetick);
+  
 
  return(0);
 

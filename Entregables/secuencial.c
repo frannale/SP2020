@@ -2,7 +2,7 @@
 #include<stdlib.h>
 #include <sys/time.h>
 
-int N=4;
+int N=2048;
 double *A,*B,*C,*D,*E;
 
 //Para calcular tiempo
@@ -17,9 +17,9 @@ double dwalltime(){
 
 int main(int argc,char*argv[]){
     int i,j,k;
-    float totalA=0;
-    float totalB=0;
-    float totalC=0;
+    int totalA=0;
+    int totalB=0;
+    int totalC=0;
     int maxA = 0;
     int maxB = 0;
     int maxC = 0;
@@ -70,22 +70,21 @@ int main(int argc,char*argv[]){
             if(C[i*N+j] < minC) minC = C[i*N+j] ;
         }
     }
-    printf("Promedio A: %f\n", totalA/(N*N) );
-    printf("Promedio B: %f\n", totalB/(N*N) );
-    printf("Promedio C: %f\n", totalC/(N*N) );
-    printf("Mi minimoo total A %d\n", minA);
-    printf("Mi maximo total A %d\n", maxA);
-    printf("Mi minimoo total B %d\n", minB);
-    printf("Mi maximo total b %d\n", maxB);
-    printf("Mi minimoo total C %d\n", minC);
-    printf("Mi maximo total C %d\n", maxC);
+    // printf("Promedio A: %f\n", totalA/(N*N) );
+    // printf("Promedio B: %f\n", totalB/(N*N) );
+    // printf("Promedio C: %f\n", totalC/(N*N) );
+    // printf("Mi minimoo total A %d\n", minA);
+    // printf("Mi maximo total A %d\n", maxA);
+    // printf("Mi minimoo total B %d\n", minB);
+    // printf("Mi maximo total b %d\n", maxB);
+    // printf("Mi minimoo total C %d\n", minC);
+    // printf("Mi maximo total C %d\n", maxC);
 
 
     // EN ESTA ALTURA YA TENEMOS EL PROMEDIO Y LOS LIMITES, SOLO QUEDA MULTIPLICARLOS POR LAS MATRICES
 
     //Realiza la multiplicacion
 
-    timetick = dwalltime();
     // E = A.B
     for(i=0;i<N;i++){
         for(j=0;j<N;j++){
@@ -97,19 +96,16 @@ int main(int argc,char*argv[]){
     // D = E.C
     for(i=0;i<N;i++){
         for(j=0;j<N;j++){
-            for(i=0;i<N;i++){
+            for(k=0;k<N;k++){
                 D[i*N+j]= E[i*N+k] * C[k+j*N];
-                printf("GU C %f\n",C[i*N+k] );
             }
         }
     }
     // MULTIPLICO POR EL ESCALAR
-    long int escalar = (maxA * maxB * maxC - minA * minB * minC) / totalA/(N*N) * totalB/(N*N) *totalC/(N*N);
+    float escalar = (maxA * maxB * maxC - minA * minB * minC) / totalA/(N*N) * totalB/(N*N) *totalC/(N*N);
     for(i=0;i<N;i++){
         for(j=0;j<N;j++){
             D[i*N+j]=D[i*N+j] * escalar;
-            printf("item %f\n", D[i*N+j] );
-            printf("escala %f\n", D[i*N+j] * escalar );
 
         }
     }
