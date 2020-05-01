@@ -25,15 +25,16 @@ int main(int argc,char*argv[]){
     }
 
     int i,j,k;
+    int random = 11;
     int totalA=0;
     int totalB=0;
     int totalC=0;
     int maxA = 0;
     int maxB = 0;
     int maxC = 0;
-    int minA = 1000;
-    int minB = 1000;
-    int minC = 1000;
+    int minA = random;
+    int minB = random;
+    int minC = random;
     //Aloca memoria para las matrices
     A=(double*)malloc(sizeof(double)*N*N);
     B=(double*)malloc(sizeof(double)*N*N);
@@ -45,9 +46,9 @@ int main(int argc,char*argv[]){
     //srand genera la semilla random y cargo las matrices
       for(i = 0 ; i < N ; i++){
         for (j = 0; j < N; j++){
-            A[i*N+j] = rand() % 1000;
-            B[i*N+j] = rand() % 1000;
-            C[i*N+j] = rand() % 1000;
+            A[i*N+j] = rand() % random;
+            B[i*N+j] = rand() % random;
+            C[i*N+j] = rand() % random;
         }
       }
 
