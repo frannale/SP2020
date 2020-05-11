@@ -45,10 +45,11 @@ int main(int argc,char*argv[]){
     srand ( time(NULL) );
     //srand genera la semilla random y cargo las matrices
       for(i = 0 ; i < N ; i++){
+        int disp = i * N;
         for (j = 0; j < N; j++){
-            A[i*N+j] = rand() % random;
-            B[i*N+j] = rand() % random;
-            C[i*N+j] = rand() % random;
+            A[disp+j] = rand() % random;
+            B[disp+j] = rand() % random;
+            C[disp+j] = rand() % random;
         }
       }
 
@@ -57,38 +58,34 @@ int main(int argc,char*argv[]){
     timetick = dwalltime();
     // RECORRO A Y CALCULO AVG,MAX,MIN
     for(i = 0 ; i < N ; i++){
+        int disp = i * N;
         for(j = 0; j < N; j++){
-            totalA+= A[i*N+j];
-            if(A[i*N+j] > maxA) maxA = A[i*N+j] ;
-            if(A[i*N+j] < minA) minA = A[i*N+j] ;
+            int pos = disp+j;
+            totalA+= A[pos];
+            if(A[pos] > maxA) maxA = A[pos] ;
+            if(A[pos] < minA) minA = A[pos] ;
         }
     }
   // RECORRO B Y CALCULO AVG,MAX,MIN
     for(i = 0 ; i < N ; i++){
+        int disp = i * N;
         for(j = 0; j < N; j++){
-            totalB+= B[i*N+j];
-            if(B[i*N+j] > maxB) maxB = B[i*N+j] ;
-            if(B[i*N+j] < minB) minB = B[i*N+j] ;
+            int pos = disp+j;
+            totalB+= B[pos];
+            if(B[pos] > maxB) maxB = B[pos] ;
+            if(B[pos] < minB) minB = B[pos] ;
         }
     }
     // RECORRO C Y CALCULO AVG,MAX,MIN
     for(i = 0 ; i < N ; i++){
+        int disp = i * N;
         for(j = 0; j < N; j++){
-            totalC+= C[i*N+j];
-            if(C[i*N+j] > maxC) maxC = C[i*N+j] ;
-            if(C[i*N+j] < minC) minC = C[i*N+j] ;
+            int pos = disp+j;
+            totalC+= C[pos];
+            if(C[pos] > maxC) maxC = C[pos] ;
+            if(C[pos] < minC) minC = C[pos] ;
         }
     }
-    // printf("Promedio A: %f\n", totalA/(N*N) );
-    // printf("Promedio B: %f\n", totalB/(N*N) );
-    // printf("Promedio C: %f\n", totalC/(N*N) );
-    // printf("Mi minimoo total A %d\n", minA);
-    // printf("Mi maximo total A %d\n", maxA);
-    // printf("Mi minimoo total B %d\n", minB);
-    // printf("Mi maximo total b %d\n", maxB);
-    // printf("Mi minimoo total C %d\n", minC);
-    // printf("Mi maximo total C %d\n", maxC);
-
 
     // EN ESTA ALTURA YA TENEMOS EL PROMEDIO Y LOS LIMITES, SOLO QUEDA MULTIPLICARLOS POR LAS MATRICES
 
@@ -96,25 +93,32 @@ int main(int argc,char*argv[]){
 
     // E = A.B
     for(i=0;i<N;i++){
+        int dispFila = i * N;
         for(j=0;j<N;j++){
+            int dispColumna = j * N;
+            int posResultado = dispFila + j;            
             for(k=0;k<N;k++){
-                E[i*N+j]= A[i*N+k] * B[k+j*N];
+                E[posResultado]= A[dispFila + k] * B[dispColumna + k];
             }
         }
     }   
     // D = E.C
     for(i=0;i<N;i++){
+        int dispFila = i * N;
         for(j=0;j<N;j++){
+            int dispColumna = j * N;
+            int posResultado = dispFila + j;            
             for(k=0;k<N;k++){
-                D[i*N+j]= E[i*N+k] * C[k+j*N];
+                D[posResultado]= E[dispFila + k] * C[dispColumna + k];
             }
         }
     }
     // MULTIPLICO POR EL ESCALAR
-    float escalar = (maxA * maxB * maxC - minA * minB * minC) / totalA/(N*N) * totalB/(N*N) *totalC/(N*N);
+    double escalar = (maxA * maxB * maxC - minA * minB * minC) / totalA/(N*N) * totalB/(N*N) *totalC/(N*N);
     for(i=0;i<N;i++){
+        int disp = i * N;
         for(j=0;j<N;j++){
-            D[i*N+j]=D[i*N+j] * escalar;
+            D[disp+j]=D[disp+j] * escalar;
 
         }
     }

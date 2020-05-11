@@ -1,3 +1,4 @@
+#define _XOPEN_SOURCE 600 /* Or higher */
 #include <pthread.h>
 #include<stdio.h>
 #include<stdlib.h>
@@ -13,85 +14,100 @@ int nRandom = 50;
 double *A,*B,*AB,*C,*D;
 // cada arreglo en su ultima posicion tendra una posicion exlusiva para calcular su contenido(avg,max,min)
 double *maxA,*maxB,*maxC,*minA,*minB,*minC,*totalA,*totalB,*totalC;
-float escalar;
-typedef struct{ 
-  	pthread_mutex_t mutex;
-  	pthread_cond_t condicion;
-  	int count;
-} barrier_struct;
-barrier_struct mean_barrier; //Barrera esperar al escalador.
-
-//Inicializacion de la barrera.
-void init_barrier(barrier_struct *barrier){ 
-  	barrier-> count = 0;
-  	pthread_mutex_init(&(barrier-> mutex), NULL);
-  	pthread_cond_init(&(barrier-> condicion), NULL);
-}
-
-//Implementacion de la barrera.
-void barrier(barrier_struct *barrier){
-	pthread_mutex_lock(&(barrier -> mutex));
-		barrier-> count ++;
-    // printf("contando barrera! %d\n", barrier -> count );
-		if (barrier -> count == canthilos){ 
-			barrier -> count = 0;     
-			pthread_cond_broadcast(&(barrier -> condicion));
-		}
-		else
-			pthread_cond_wait(&(barrier -> condicion),&(barrier -> mutex));
-	pthread_mutex_unlock(&(barrier -> mutex));
-}
+double escalar;
+// creacion de barreras
+int pthread_barrier_init(pthread_barrier_t *restrict firstBarrier,
+const pthread_barrierattr_t *restrict attr,
+unsigned cantHilos);
+int pthread_barrier_init(pthread_barrier_t *restrict secondBarrier,
+const pthread_barrierattr_t *restrict attr,
+unsigned cantHilos);
 
 
 // HILO QUE CALCULA EL PROMEDIO Y MAXIMOS,MINIMOS
-void *computarExpresionEscalar(void *id) {
+void *computarExpresionEscalar(void * ptr) {
     int i,j,k;
-    int threadId = (int) (__intptr_t) id;
+    int * p,threadId;
+    int localMax = 0;
+    int localMin = nRandom;
+    int localTot = 0;
+    p = (int *) ptr;
+    threadId = * p;
     int inicio = threadId * (N/canthilos);
     int fin = inicio + (N/canthilos);
     //RECORRO A   
     for( i = inicio ; i < fin ; i++){
+      int disp = i * N;
       for( j = 0; j < N; j++){
-        totalA[threadId] = totalA[threadId] + A[i*N+j];        
-        if(A[i*N+j] > maxA[threadId]) maxA[threadId] = A[i*N+j] ;
-        if(A[i*N+j] < minA[threadId]) minA[threadId] = A[i*N+j] ;
+        int pos = disp + j;
+        localTot += A[pos];        
+        if(A[pos] > localMax) localMax = A[pos] ;
+        if(A[pos] < localMin) localMin = A[pos] ;
       }
     }
+    // GUARDO EN EL ARREGLO GLOBAL MIS VALORES, Y VUELVO A INCIALIZAR VARIABLES PARA B
+    totalA[threadId] = localTot;
+    maxA[threadId] = localMax;
+    minA[threadId] = localMin;
+    localMax = 0;
+    localMin = nRandom;
+    localTot = 0;
     //RECORRO B
     for( i = inicio ; i < fin ; i++){
+      int disp = i * N;
       for( j = 0; j < N; j++){
-        totalB[threadId] += B[i*N+j];
-        if(B[i*N+j] > maxB[threadId]) maxB[threadId] = B[i*N+j] ;
-        if(B[i*N+j] < minB[threadId]) minB[threadId] = B[i*N+j] ;
+        int pos = disp + j;
+        localTot += B[pos];
+        if(B[pos] > localMax) localMax = B[pos] ;
+        if(B[pos] < localMin) localMin = B[pos] ;
       }
     }
+    // GUARDO EN EL ARREGLO GLOBAL MIS VALORES, Y VUELVO A INCIALIZAR VARIABLES PARA C
+    totalB[threadId] = localTot;
+    maxB[threadId] = localMax;
+    minB[threadId] = localMin;
+    localMax = 0;
+    localMin = nRandom;
+    localTot = 0;
     //RECORRO C
     for( i = inicio ; i < fin ; i++){
+      int disp = i * N;
       for( j = 0; j < N; j++){
-        totalC[threadId] += C[i*N+j];
-        if(C[i*N+j] > maxC[threadId]) maxC[threadId] = C[i*N+j] ;
-        if(C[i*N+j] < minC[threadId]) minC[threadId] = C[i*N+j] ;
+        int pos = disp + j;
+        localTot += C[pos];
+        if(C[pos] > localMax) localMax = C[pos] ;
+        if(C[pos] < localMin) localMin = C[pos] ;
       }
     }
+    totalC[threadId] = localTot;
+    maxC[threadId] = localMax;
+    minC[threadId] = localMin;
     // A.B
     for( i=inicio;i<fin;i++){
+        int dispFila = i * N;
         for(j=0;j<N;j++){
+            int dispColumna = j * N;
             for(k=0;k<N;k++){
-                AB[i*N+j]= A[i*N+k] * B[k+j*N];
+                AB[dispFila + j]= A[dispFila + k] * B[dispColumna + k];
             }
         }
     }   
     // D = AB.C
     for(i=inicio;i<fin;i++){
+        int dispFila = i * N;
         for(j=0;j<N;j++){
+          int dispColumna = j * N;
             for(k=0;k<N;k++){
-                D[i*N+j]= AB[i*N+k] * C[k+j*N];
+                D[dispFila+j]= AB[dispFila+k] * C[dispColumna + k];
             }
         }
     }
 
-    // EL HILO 0, RECORRE LO GENERADO POR LO HILOS Y CALCULA LOS AVG,MIN,MAX
+    int pthread_barrier_wait(pthread_barrier_t *firstBarrier);
+
+    // LUEGO QUE LA BARRERA ASEGURO QUE TODOS TERMINARON,EL HILO 0, RECORRE LO GENERADO POR LO HILOS Y CALCULA LOS AVG,MIN,MAX
     if( threadId == 0){
+      int pthread_barrier_destroy(pthread_barrier_t * firstBarrier);
       for(i = 0; i < canthilos; i++){
         totalA[canthilos] += totalA[i];
         totalB[canthilos] += totalB[i];
@@ -103,30 +119,23 @@ void *computarExpresionEscalar(void *id) {
         if( maxB[canthilos] < maxB[i] ) maxB[canthilos] = maxB[i];
         if( maxC[canthilos] < maxC[i] ) maxC[canthilos] = maxC[i];
         }
-        // printf("El elegido! %d\n", threadId );
-        // printf("Promedio A: %d\n", totalA[canthilos]/(N*N) );
-        // printf("Promedio B: %d\n", totalB[canthilos]/(N*N) );
-        // printf("Promedio C: %d\n", totalC[canthilos]/(N*N) );
-        // printf("Mi minimoo total A %d\n", minA[canthilos]);
-        // printf("Mi maximo total A %d\n", maxA[canthilos]);
-        // printf("Mi minimoo total B %d\n", minB[canthilos]);
-        // printf("Mi maximo total b %d\n", maxB[canthilos]);
-        // printf("Mi minimoo total C %d\n", minC[canthilos]);
-        // printf("Mi maximo total C %d\n", maxC[canthilos]);
+        
         escalar = (maxA[canthilos] * maxB[canthilos] * maxC[canthilos] - minA[canthilos] * minB[canthilos] * minC[canthilos]) / totalA[canthilos]/(N*N) * totalB[canthilos]/(N*N) *totalC[canthilos]/(N*N);
-        // printf("El escalar:  %f\n", escalar );
     }
     //BARRERA PARA ESPERAR AL QUE SE SACRIFICA POR EL TEAM Y CALCULA EL ESCALAR PARA QUE LOS DEMAS HILOS LO USEN
-    // printf("El dale! %d\n", threadId );
-    barrier(&mean_barrier);
+
+    int pthread_barrier_wait(pthread_barrier_t *secondBarrier);
 
     // MULTIPLICO POR EL ESCALAR
     for(i=inicio;i<fin;i++){
+        int dispFila = i * N;
         for(j=0;j<N;j++){
-            D[i*N+j]=D[i*N+j] * escalar;
+            D[dispFila+j]=D[dispFila+j] * escalar;
 
         }
     }
+    // FINALIZA LA EJECUCION DEL HILO
+    pthread_exit(0);
 
 }
 
@@ -151,7 +160,7 @@ int main(int argc,char*argv[]){
     C=(double*)malloc(sizeof(double)*N*N);
     D=(double*)malloc(sizeof(double)*N*N);
     AB=(double*)malloc(sizeof(double)*N*N);
-    // aloco los arreglos
+    // Aloco los arreglos
     totalA = (double*)malloc(sizeof(double)*canthilos +1 );
     totalB = (double*)malloc(sizeof(double)*canthilos +1 );
     totalC = (double*)malloc(sizeof(double)*canthilos +1 );
@@ -161,22 +170,6 @@ int main(int argc,char*argv[]){
     minA = (double*)malloc(sizeof(double)*canthilos +1 );
     minB = (double*)malloc(sizeof(double)*canthilos +1 );
     minC = (double*)malloc(sizeof(double)*canthilos +1 );
-
-    // SETEO DE LOS VALORES EN LOS DISTINTOS ARREGLOS, CADA HILO TIENE UN ELEMENTO UNICO Y EXCLUSIVO EN CADA UNO DE ELLOS
-    for(int i = 0; i <= canthilos; i++){
-   		totalA[i] = 0;       
-      totalB[i] = 0;
-      totalC[i] = 0;
-      maxA[i] = 0;
-      maxB[i] = 0; 
-      maxC[i] = 0;
-      maxC[i] = 0;
-      minA[i] = nRandom;
-      minB[i] = nRandom;
-      minC[i] = nRandom;
-      // printf("El seteo quedo:! %d\n", minC[i] );
-
-    } 
 
     srand ( time(NULL) );
     //srand genera la semilla random y cargo las matrices
@@ -192,18 +185,20 @@ int main(int argc,char*argv[]){
     timetick = dwalltime();
     pthread_t threads[canthilos];
     pthread_attr_t attr;
-
-
-    for (i = 0; i < canthilos; i++)
-      pthread_create(&threads[i], NULL, computarExpresionEscalar, (void *) (__intptr_t) i);  
-    
+    int ids[canthilos];
+    // CREACION DE HILOS
+    for (i = 0; i < canthilos; i++){
+      ids[i] = i;
+      pthread_create(&threads[i], NULL, computarExpresionEscalar, &ids[i]);  
+    }
+       
     for (i = 0; i < canthilos; i++)
       pthread_join(threads[i], NULL);
+
+    int pthread_barrier_destroy(pthread_barrier_t * secondBarrier);
 
     //TERMINO
     printf("Tiempo en segundos %f\n", dwalltime() - timetick);
   
-
  return(0);
-
 }
